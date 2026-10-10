@@ -2,6 +2,8 @@
 
 Минимальный текстовый чат на React + TypeScript + Vite с Telegram через GREEN-API. Интерфейс: список чатов, лента входящих и исходящих сообщений, поле отправки.
 
+Live версия - [https://green-api-test-ten-mu.vercel.app/](https://green-api-test-ten-mu.vercel.app/)
+
 Оформление основано на тёмной теме [MAX](https://web.max.ru/) и официальных примерах [для компьютера](https://download.max.ru/#desktop) и [телефона](https://max.ru/). Цвета и фон взяты из веб-версии MAX; Roboto хранится локально с [лицензией OFL](public/fonts/OFL.txt). На телефоне список чатов и переписка открываются отдельными экранами.
 
 ## Запуск
