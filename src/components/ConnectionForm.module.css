@@ -1,0 +1,89 @@
+.panel {
+  width: 100%;
+  max-width: 416px;
+  padding: 32px;
+  border: 1px solid #ffffff1f;
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.brand {
+  display: inline-flex;
+  margin-bottom: 24px;
+}
+
+.logo {
+  display: block;
+  width: min(100%, 220px);
+  height: auto;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.description {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.fields {
+  display: grid;
+  gap: 16px;
+  margin-block: 24px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid #ffffff29;
+  border-radius: 12px;
+  color: inherit;
+  background: var(--surface-secondary);
+  font-size: 16px;
+}
+
+.button {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 16px 0 0;
+  color: #ffb4b4;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.button:hover:not(:disabled) {
+  background: #479fff;
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: 24px;
+  }
+}

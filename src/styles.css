@@ -1,0 +1,82 @@
+@font-face {
+  font-family: Roboto;
+  src: url('/fonts/roboto-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url('/fonts/roboto-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url('/fonts/roboto-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  --surface: #17181c;
+  --surface-secondary: #25262d;
+  --divider: #ffffff0f;
+  --text-secondary: #ffffffad;
+  --accent: #007aff;
+  font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, Arial, sans-serif;
+  color-scheme: dark;
+  color: #fff;
+  background: #141414;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff29 transparent;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #479fff;
+  outline-offset: 3px;
+}
+
+::selection {
+  color: #fff;
+  background: #6965e5;
+}
+
+.page {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 24px;
+}
+
+.page::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: #505bc74d;
+  mask: url('/max-chat-pattern.svg') repeat;
+  content: '';
+  pointer-events: none;
+}
