@@ -1,39 +1,22 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type SubmitEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type SubmitEvent } from "react";
 import {
   checkAccount,
   sendMessage,
   type GreenApiCredentials,
   type TextMessage,
 } from "../api/green-api.ts";
+import type { Chat, ChatMessage } from "../chat.ts";
 import { useNotificationPoll } from "../hooks/useNotificationPoll.ts";
+import { ChatSidebar } from "./ChatSidebar.tsx";
+import { MessageComposer } from "./MessageComposer.tsx";
+import { MessageList } from "./MessageList.tsx";
 import { PhoneInput } from "./PhoneInput.tsx";
 import styles from "./ChatApp.module.css";
 
-type ChatMessage = TextMessage & { direction: "in" | "out" };
-type Chat = {
-  chatId: string;
-  title: string;
-  messages: ChatMessage[];
-};
 type ChatAppProps = {
   credentials: GreenApiCredentials;
   onDisconnect: () => void;
 };
-
-function messageTime(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function messageDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 export function ChatApp({ credentials, onDisconnect }: ChatAppProps) {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -49,9 +32,7 @@ export function ChatApp({ credentials, onDisconnect }: ChatAppProps) {
   const sendController = useRef<AbortController | null>(null);
   const createController = useRef<AbortController | null>(null);
   const newChatDialog = useRef<HTMLDialogElement>(null);
-  const messageList = useRef<HTMLDivElement>(null);
   const activeChat = chats.find((chat) => chat.chatId === activeChatId);
-  const messageCount = activeChat?.messages.length ?? 0;
   const busy = isSending || isCreatingChat;
   const visibleChats = chats.filter((chat) => chat.title.includes(search.trim()));
 
@@ -96,14 +77,6 @@ export function ChatApp({ credentials, onDisconnect }: ChatAppProps) {
   );
 
   const pollError = useNotificationPoll(credentials, handleIncomingMessage);
-
-  useEffect(() => {
-    const list = messageList.current;
-
-    if (list) {
-      list.scrollTop = list.scrollHeight;
-    }
-  }, [activeChatId, messageCount]);
 
   useEffect(
     () => () => {
@@ -239,68 +212,20 @@ export function ChatApp({ credentials, onDisconnect }: ChatAppProps) {
         </button>
       </nav>
 
-      <aside className={styles.sidebar} aria-label="Чаты">
-        <header className={styles.sidebarHeader}>
-          <h1>Чаты</h1>
-          <button
-            className={styles.newChatButton}
-            type="button"
-            aria-label="Новый чат"
-            disabled={busy}
-            onClick={() => {
-              setPhoneError("");
-              newChatDialog.current?.showModal();
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
-        </header>
-        <div className={styles.search}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" />
-          </svg>
-          <label htmlFor="chat-search" className={styles.srOnly}>Поиск по номеру</label>
-          <input
-            id="chat-search"
-            type="search"
-            placeholder="Поиск"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-        <nav className={styles.chatList} aria-label="Список чатов">
-          {visibleChats.length === 0 && (
-            <p className={styles.emptyList}>{search ? "Чаты не найдены" : "Начните новый чат"}</p>
-          )}
-          {visibleChats.map((chat) => {
-            const lastMessage = chat.messages.at(-1);
-
-            return (
-              <button
-                key={chat.chatId}
-                type="button"
-                className={`${styles.chatItem} ${chat.chatId === activeChatId ? styles.activeChat : ""}`}
-                aria-current={chat.chatId === activeChatId ? "true" : undefined}
-                onClick={() => selectChat(chat.chatId)}
-                disabled={busy}
-              >
-                <span className={styles.avatar} aria-hidden="true">{chat.title.slice(-2)}</span>
-                <span className={styles.chatDetails}>
-                  <span className={styles.chatTitle}>{chat.title}</span>
-                  <span className={styles.preview}>{lastMessage?.text ?? "Напишите первое сообщение"}</span>
-                </span>
-                {lastMessage && <span className={styles.chatTime}>{messageTime(lastMessage.timestamp)}</span>}
-              </button>
-            );
-          })}
-        </nav>
-        <footer className={styles.account}>
-          <span>GREEN-API {credentials.idInstance}</span>
-          <button className={styles.mobileDisconnect} type="button" onClick={onDisconnect}>Выйти</button>
-        </footer>
-      </aside>
+      <ChatSidebar
+        chats={visibleChats}
+        activeChatId={activeChatId}
+        search={search}
+        idInstance={credentials.idInstance}
+        disabled={busy}
+        onSearchChange={setSearch}
+        onSelectChat={selectChat}
+        onNewChat={() => {
+          setPhoneError("");
+          newChatDialog.current?.showModal();
+        }}
+        onDisconnect={onDisconnect}
+      />
 
       <section className={styles.conversation} aria-label="Переписка" data-empty={!activeChat}>
         {activeChat && (
@@ -320,67 +245,16 @@ export function ChatApp({ credentials, onDisconnect }: ChatAppProps) {
           </header>
         )}
         {pollError && <p className={styles.pollError} role="alert">{pollError}</p>}
-        <div className={styles.messages} ref={messageList} role="log" aria-label="Сообщения" aria-live="polite">
-          {messageCount === 0 && (
-            <div className={styles.emptyConversation}>
-              <h3>{activeChat ? "Начните разговор" : "Выберите чат"}</h3>
-              <p>{activeChat ? "Напишите первое сообщение" : "Или создайте новый по номеру телефона"}</p>
-            </div>
-          )}
-          {activeChat?.messages.map((message, index) => {
-            const date = messageDate(message.timestamp);
-            const previousMessage = activeChat.messages[index - 1];
-            const showDate = !previousMessage || messageDate(previousMessage.timestamp) !== date;
-
-            return (
-              <Fragment key={message.idMessage}>
-                {showDate && <div className={styles.date}><span>{date}</span></div>}
-                <div className={`${styles.messageRow} ${message.direction === "out" ? styles.outgoing : ""}`}>
-                  <div className={styles.bubble}>
-                    <span className={styles.srOnly}>{message.direction === "out" ? "Вы: " : "Собеседник: "}</span>
-                    <p>{message.text}</p>
-                    <time className={styles.messageTime} dateTime={new Date(message.timestamp * 1000).toISOString()}>
-                      {messageTime(message.timestamp)}
-                    </time>
-                  </div>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
+        <MessageList chat={activeChat} />
         {activeChat && (
-          <form className={styles.composer} onSubmit={handleSend} aria-busy={isSending}>
-            {sendError && <p className={styles.error} role="alert">{sendError}</p>}
-            <div className={styles.composerRow}>
-              <label htmlFor="message" className={styles.srOnly}>Сообщение</label>
-              <textarea
-                id="message"
-                placeholder="Сообщение"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                    event.preventDefault();
-                    event.currentTarget.form?.requestSubmit();
-                  }
-                }}
-                rows={1}
-                maxLength={4096}
-                required
-                disabled={busy}
-              />
-              <button
-                className={styles.sendButton}
-                type="submit"
-                aria-label={isSending ? "Отправляем…" : "Отправить"}
-                disabled={!draft.trim() || busy}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path d="m4 4 17 8-17 8 3-8-3-8ZM7 12h14" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </form>
+          <MessageComposer
+            draft={draft}
+            error={sendError}
+            isSending={isSending}
+            disabled={busy}
+            onDraftChange={setDraft}
+            onSubmit={handleSend}
+          />
         )}
       </section>
 
